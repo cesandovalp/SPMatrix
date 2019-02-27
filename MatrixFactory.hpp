@@ -2,6 +2,7 @@
 
 #include "SerialMatrixOperations.hpp"
 #include "MultiCoreMatrixOperations.hpp"
+#include "GPUMatrixOperations.hpp"
 
 namespace sp
 {
@@ -26,7 +27,7 @@ namespace sp
         {
           case sequential: sp::SetSerial( &result )   ; break;
           case multicore : sp::SetMultiCore( &result ); break;
-          case gpu       : sp::SetMultiCore( &result ); break;
+          case gpu       : sp::SetGPU( &result )      ; break;
         }
         return result;
       }
@@ -39,7 +40,7 @@ namespace sp
         {
           case sequential: sp::SetSerial( result )   ; break;
           case multicore : sp::SetMultiCore( result ); break;
-          case gpu       : sp::SetMultiCore( result ); break;
+          case gpu       : sp::SetGPU( result )      ; break;
         }
         return result;
       }
@@ -52,7 +53,7 @@ namespace sp
         {
           case sequential: sp::SetSerial( &result )   ; break;
           case multicore : sp::SetMultiCore( &result ); break;
-          case gpu       : sp::SetMultiCore( &result ); break;
+          case gpu       : sp::SetGPU( &result )      ; break;
         }
         return result;
       }
@@ -68,7 +69,7 @@ namespace sp
           {
             case sequential: sp::SetSerial( &result[i] )   ; break;
             case multicore : sp::SetMultiCore( &result[i] ); break;
-            case gpu       : sp::SetMultiCore( &result[i] ); break;
+            case gpu       : sp::SetGPU( &result[i] )      ; break;
           }
         }
         return result;
