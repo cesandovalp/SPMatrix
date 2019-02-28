@@ -1,4 +1,4 @@
-#include "MatrixFactory.hpp"
+#include <MatrixFactory.hpp>
 
 namespace sp
 {
