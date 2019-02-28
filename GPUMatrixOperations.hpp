@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Matrix.hpp"
+#include "MultiCoreMatrixOperations.hpp"
 
 void GPUAddition_( double* host_a, const double* host_b, double* host_result, int rows, int columns );
 void GPUAddition_( float*  host_a, const float*  host_b, float*  host_result, int rows, int columns );
@@ -13,6 +14,14 @@ void GPUDifference_( int*    host_a, const int*    host_b, int*    host_result, 
 void GPUMultiplication_( double* host_a, const double* host_b, double* host_result, int a_rows, int a_columns, int b_columns );
 void GPUMultiplication_( float*  host_a, const float*  host_b, float*  host_result, int a_rows, int a_columns, int b_columns );
 void GPUMultiplication_( int*    host_a, const int*    host_b, int*    host_result, int a_rows, int a_columns, int b_columns );
+
+void GPUMultiplication_( double* host_a, const double host_b, double* host_result, int a_rows, int a_columns );
+void GPUMultiplication_( float*  host_a, const float  host_b, float*  host_result, int a_rows, int a_columns );
+void GPUMultiplication_( int*    host_a, const int    host_b, int*    host_result, int a_rows, int a_columns );
+
+void GPUHadamard_( double* host_a, const double* host_b, double* host_result, int rows, int columns );
+void GPUHadamard_( float*  host_a, const float*  host_b, float*  host_result, int rows, int columns );
+void GPUHadamard_( int*    host_a, const int*    host_b, int*    host_result, int rows, int columns );
 
 namespace sp
 {
@@ -59,8 +68,7 @@ namespace sp
   template<typename domain>
   void GPUMultiplication( Matrix<domain>* a, const domain& b )
   {
-    for( unsigned i = 0; i < a->rows * a->columns; ++i )
-      a->data[i] *= b;
+    GPUMultiplication_( a->data, b, a->data, a->rows, a->columns );
   }
 
   template<typename domain>
@@ -80,82 +88,13 @@ namespace sp
   template<typename domain>
   void GPUHadamard( Matrix<domain>* a, const Matrix<domain>& b )
   {
-    for( unsigned i = 0; i < a->rows; ++i )
-      for( unsigned j = 0; j < a->columns; ++j )
-        a->data[i * a->columns + j] *= b.data[i * a->columns + j];
+    GPUHadamard_( a->data, b.data, a->data, a->rows, a->columns );
   }
 
   template<typename domain>
   void GPUMultiplicationIn( Matrix<domain>* a, const Matrix<domain>& b, const Matrix<domain>& c )
   {
     GPUMultiplication_( b.data, c.data, a->data, b.rows, b.columns, c.columns );
-  }
-
-  template<typename domain>
-  void GPUNegative( const Matrix<domain>* a, Matrix<domain>& b )
-  {
-    for( unsigned i = 0; i < a->rows; ++i )
-      for( unsigned j = 0; j < a->columns; ++j )
-        b.data[i * a->columns + j] = -a->data[i * a->columns + j];
-  }
-
-  template<typename domain>
-  void GPUTranspose( Matrix<domain>* a )
-  {
-    for( unsigned i = 0; i < a->columns; ++i )
-      for( unsigned j = 0; j < a->rows; ++j )
-        a->tmp[i * a->rows + j] = a->data[j * a->columns + i];
-
-    domain* tmp = a->tmp;
-    a->tmp = a->data;
-    a->data = tmp;
-
-    auto rows  = a->rows;
-    a->rows    = a->columns;
-    a->columns = rows;
-  }
-
-  template<typename domain>
-  void GPUAssign( Matrix<domain>* a, const Matrix<domain>& b )
-  {
-    for( unsigned i = 0; i < a->rows; ++i )
-      for( unsigned j = 0; j < a->columns; ++j )
-      {
-        a->data[i * a->columns + j] = b.data[i * a->columns + j];
-        a->tmp[i * a->columns + j]  = b.tmp[i * a->columns + j];
-      }
-  }
-
-  template<typename domain>
-  void GPUAssign( Matrix<domain>* a, const domain& b )
-  {
-    for( unsigned i = 0; i < a->rows; ++i )
-      for( unsigned j = 0; j < a->columns; ++j )
-      {
-        a->data[i * a->columns + j] = b;
-        a->tmp[i * a->columns + j]  = 0;
-      }
-  }
-
-  template<typename domain>
-  void GPUAssign( Matrix<domain>* a, const std::vector<domain>& b )
-  {
-    a->columns = b.size();
-    a->rows    = 1       ;
-
-    for( unsigned i = 0; i < b.size(); ++i )
-    {
-      a->data[i]   = b[i];
-      a->tmp[i]    = 0   ;
-    }
-  }
-
-  template<typename domain>
-  void GPUCopy( Matrix<domain>* a, const Matrix<domain>& b )
-  {
-    for( unsigned i = 0; i < a->rows; ++i )
-      for( unsigned j = 0; j < a->columns; ++j )
-        a->data[i * a->columns + j] = b.data[i * a->columns + j];
   }
 
   template<typename domain>
@@ -169,22 +108,22 @@ namespace sp
   template<typename domain>
   void SetGPU( Matrix<domain>* m )
   {
-    m->negative              = GPUNegative<domain>        ;
-    m->transpose             = GPUTranspose<domain>       ;
-    m->copy                  = GPUCopy<domain>            ;
-    m->assign                = GPUAssign<domain>          ;
-    m->assign_vector         = GPUAssign<domain>          ;
-    m->assign_scalar         = GPUAssign<domain>          ;
-    m->addition              = GPUAddition<domain>        ;
-    m->addition_vector       = GPUAddition<domain>        ;
-    m->difference            = GPUDifference<domain>      ;
-    m->difference_vector     = GPUDifference<domain>      ;
-    m->multiplication        = GPUMultiplication<domain>  ;
-    m->multiplication_       = GPUMultiplicationAux<domain> ;
-    m->hadamard_product      = GPUHadamard<domain>        ;
-    m->multiplication_vector = GPUMultiplication<domain>  ;
-    m->multiplication_scalar = GPUMultiplication<domain>  ;
-    m->multiplication_in     = GPUMultiplicationIn<domain>;
-    m->apply                 = GPUApply<domain>           ;
+    m->negative              = MultiCoreNegative<domain>   ;
+    m->transpose             = MultiCoreTranspose<domain>  ;
+    m->copy                  = MultiCoreCopy<domain>       ;
+    m->assign                = MultiCoreAssign<domain>     ;
+    m->assign_vector         = MultiCoreAssign<domain>     ;
+    m->assign_scalar         = MultiCoreAssign<domain>     ;
+    m->addition              = GPUAddition<domain>         ;
+    m->addition_vector       = GPUAddition<domain>         ;
+    m->difference            = GPUDifference<domain>       ;
+    m->difference_vector     = GPUDifference<domain>       ;
+    m->multiplication        = GPUMultiplication<domain>   ;
+    m->multiplication_       = GPUMultiplicationAux<domain>;
+    m->hadamard_product      = GPUHadamard<domain>         ;
+    m->multiplication_vector = GPUMultiplication<domain>   ;
+    m->multiplication_scalar = GPUMultiplication<domain>   ;
+    m->multiplication_in     = GPUMultiplicationIn<domain> ;
+    m->apply                 = GPUApply<domain>            ;
   }
 }

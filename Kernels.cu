@@ -17,3 +17,13 @@ void GPUMultiplication_( double* host_a, const double* host_b, double* host_resu
 {
   GPUMultiplication<double>( host_a, host_b, host_result, a_rows, a_columns, b_columns );
 }
+
+void GPUMultiplication_( double* host_a, const double host_b, double* host_result, int rows, int columns )
+{
+  GPUMultiplication<double>( host_a, host_b, host_result, rows, columns );
+}
+
+void GPUHadamard_( double* host_a, const double* host_b, double* host_result, int rows, int columns )
+{
+  GPUHadamard<double>( host_a, host_b, host_result, rows, columns );
+}
