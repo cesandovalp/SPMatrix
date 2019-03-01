@@ -1,8 +1,9 @@
 #include <iostream>
 #include <assert.h>
-//#include "Matrix.hpp"
-#include "SerialMatrixOperations.hpp"
-#include "MultiCoreMatrixOperations.hpp"
+
+#include <MatrixFactory.hpp>
+#include <SerialMatrixOperations.hpp>
+#include <MultiCoreMatrixOperations.hpp>
 
 using sp::Matrix;
 
@@ -25,11 +26,8 @@ void FillMatrix( Matrix<int>& M )
 
 void TestAddition()
 {
-  Matrix<int> A( 4, 5 );
-  Matrix<int> B( 4, 5 );
-
-  sp::SetSerial( &A ); //SetSerial
-  sp::SetSerial( &B );
+  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 4, 5 );
+  auto B = sp::MatrixFactory::instance()->CreateMatrix<int>( 4, 5 );
 
   FillMatrix( A );
   FillMatrix( B );
@@ -47,15 +45,12 @@ void TestAddition()
 
 void TestMultiplicationVector()
 {
-  Matrix<int>      A( 2, 3 );
+  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 2, 3 );
   std::vector<int> B( { 1, 2, 3 } );
-
-  sp::SetSerial( &A ); //SetSerial
 
   FillMatrix( A );
 
   auto C = A * B;
-  //std::cout << "C memory address: " << &C << std::endl;
 
   PrintMatrix( A );
   std::cout << std::endl;
@@ -65,17 +60,13 @@ void TestMultiplicationVector()
 
 void TestMultiplication()
 {
-  Matrix<int> A( 2, 3 );
-  Matrix<int> B( 3, 4 );
-
-  sp::SetSerial( &A );
-  sp::SetSerial( &B );
+  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 2, 3 );
+  auto B = sp::MatrixFactory::instance()->CreateMatrix<int>( 3, 4 );
 
   FillMatrix( A );
   FillMatrix( B );
 
   auto C = A * B;
-  //std::cout << "C memory address: " << &C << std::endl;
 
   PrintMatrix( A );
   std::cout << std::endl;
@@ -86,17 +77,13 @@ void TestMultiplication()
 
 void TestMultiplicationNoResize()
 {
-  Matrix<int> A( 3, 3 );
-  Matrix<int> B( 3, 3 );
-
-  sp::SetSerial( &A );
-  sp::SetSerial( &B );
+  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 3, 3 );
+  auto B = sp::MatrixFactory::instance()->CreateMatrix<int>( 3, 3 );
 
   FillMatrix( A );
   FillMatrix( B );
 
   A.Multiplication( B );
-  //std::cout << "C memory address: " << &C << std::endl;
 
   PrintMatrix( A );
   std::cout << std::endl;
@@ -105,17 +92,13 @@ void TestMultiplicationNoResize()
 
 void TestHadamardProduct()
 {
-  Matrix<int> A( 10, 10 );
-  Matrix<int> B( 10, 10 );
-
-  sp::SetSerial( &A );
-  sp::SetSerial( &B );
+  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 10, 10 );
+  auto B = sp::MatrixFactory::instance()->CreateMatrix<int>( 10, 10 );
 
   FillMatrix( A );
   FillMatrix( B );
 
   A.HadamardProduct( B );
-  //std::cout << "C memory address: " << &C << std::endl;
 
   PrintMatrix( A );
   std::cout << std::endl;
@@ -124,19 +107,14 @@ void TestHadamardProduct()
 
 void TestMultiplicationIn()
 {
-  Matrix<int> A( 3, 3 );
-  Matrix<int> B( 3, 3 );
-  Matrix<int> C( 3, 3 );
-
-  sp::SetSerial( &A );
-  sp::SetSerial( &B );
-  sp::SetSerial( &C );
+  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 3, 3 );
+  auto B = sp::MatrixFactory::instance()->CreateMatrix<int>( 3, 3 );
+  auto C = sp::MatrixFactory::instance()->CreateMatrix<int>( 3, 3 );
 
   FillMatrix( A );
   FillMatrix( B );
 
   C.Multiplication( A, B );
-  //std::cout << "C memory address: " << &C << std::endl;
 
   PrintMatrix( A );
   std::cout << std::endl;
@@ -147,9 +125,7 @@ void TestMultiplicationIn()
 
 void TestMultiplicationScalar()
 {
-  Matrix<int> A( 2, 3 );
-
-  sp::SetSerial( &A );
+  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 2, 3 );
 
   FillMatrix( A );
 
@@ -163,12 +139,10 @@ void TestMultiplicationScalar()
 
 void TestTranspose()
 {
-  Matrix<int> A( 2, 3 );
+  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 2, 3 );
   FillMatrix( A );
   PrintMatrix( A );
   std::cout << std::endl;
-
-  sp::SetSerial( &A );
 
   auto B = !A;
   PrintMatrix( B );
@@ -176,12 +150,10 @@ void TestTranspose()
 
 void TestMinus()
 {
-  Matrix<int> A( 3, 3 );
+  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 3, 3 );
   FillMatrix( A );
   PrintMatrix( A );
   std::cout << std::endl;
-
-  sp::SetSerial( &A );
 
   auto B = -A;
   PrintMatrix( B );
@@ -189,7 +161,7 @@ void TestMinus()
 
 void TestCopy()
 {
-  Matrix<int> A( 3, 3 );
+  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 3, 3 );
   FillMatrix( A );
   PrintMatrix( A );
   std::cout << std::endl;
@@ -200,12 +172,10 @@ void TestCopy()
 
 void TestApply()
 {
-  Matrix<int> A( 3, 3);
+  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 3, 3 );
   FillMatrix( A );
   PrintMatrix( A );
   std::cout << std::endl;
-
-  sp::SetSerial( &A );
 
   std::cout << "square" << std::endl;
   auto B = A.Apply( []( int x ) { return x * x; } );
@@ -223,7 +193,7 @@ void TestApply()
 
 void TestToTarget()
 {
-  Matrix<int> A( 3, 3 );
+  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 3, 3 );
   FillMatrix( A );
   PrintMatrix( A );
   std::cout << std::endl;
@@ -237,6 +207,10 @@ void TestToTarget()
 
 int main()
 {
+  //sp::MatrixFactory::instance()->SetMode( sp::sequential );
+  //sp::MatrixFactory::instance()->SetMode( sp::multicore );
+  sp::MatrixFactory::instance()->SetMode( sp::gpu );
+
   std::cout << "################## Test Addition ################" << std::endl;
   TestAddition();
   std::cout << "############### Test Multiplication #############" << std::endl;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Matrix.hpp"
 #include "MultiCoreMatrixOperations.hpp"
 
 void GPUAddition_( double* host_a, const double* host_b, double* host_result, int rows, int columns );

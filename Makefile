@@ -30,9 +30,9 @@ all: $(LIBDIR)/$(LIBRARY)
 testing: $(LIBDIR)/$(LIBRARY)
 	@mkdir -p $(TARGETDIR)
 	@echo " $(CC) $(CFLAGS) $(INC) $(TESTDIR)/TestMatrix.cpp -o bin/TestMatrix"
-	$(CC) $(CFLAGS) $(INC) $(TESTDIR)/TestMatrix.cpp -o bin/TestMatrix
+	$(CC) $(CFLAGS) $(INC) -L$(LIBDIR) -lSPMatrix -L/opt/cuda/lib64 -lcuda -lcudart $(TESTDIR)/TestMatrix.cpp -o bin/TestMatrix
 
-$(LIBDIR)/$(LIBRARY): $(BUILDDIR)/cuda_link.o $(OBJECTS)
+$(LIBDIR)/$(LIBRARY): $(BUILDDIR)/cuda_link.o $(OBJECTS) $(NVOBJECTS)
 	@mkdir -p $(LIBDIR)
 	$(CC) $(SO_FLAGS) -Wl,-soname,$(LIBRARY) -o $@ $^ -lc
 
