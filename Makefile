@@ -17,6 +17,8 @@ SOURCES   := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
 NVSOURCES := $(shell find $(SRCDIR) -type f -name *.$(NVSRCEXT))
 OBJECTS   := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 NVOBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(NVSOURCES:.$(NVSRCEXT)=.o))
+OBJECTS_  := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
+NVOBJECTS_:= $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(NVSOURCES:.$(NVSRCEXT)=.o))
 CFLAGS    := -std=c++14 -O3 -fPIC -fopenmp -Wall -Wno-unused-function
 NVCFLAGS  := -arch=sm_61 -I. -rdc=true -Xcompiler -fPIC -Xcompiler -O3
 NVLFLAGS  := -arch=sm_61 -dlink -Xcompiler -fPIC
@@ -29,7 +31,7 @@ all: $(LIBDIR)/$(LIBRARY)
 
 static: $(LIBDIR)/$(STATICLIB)
 
-$(LIBDIR)/$(STATICLIB) : $(BUILDDIR)/cuda_link.o $(OBJECTS) $(NVOBJECTS)
+$(LIBDIR)/$(STATICLIB) : $(BUILDDIR)/cuda_link.o $(OBJECTS_) $(NVOBJECTS_)
 	@mkdir -p $(LIBDIR)
 	@ar rsv $@ $^
 
