@@ -27,6 +27,12 @@ library: $(LIBDIR)/$(LIBRARY)
 
 all: $(LIBDIR)/$(LIBRARY)
 
+static: $(LIBDIR)/$(STATICLIB)
+
+$(LIBDIR)/$(STATICLIB) : $(BUILDDIR)/cuda_link.o $(OBJECTS) $(NVOBJECTS)
+	@mkdir -p $(LIBDIR)
+	@ar rsv $@ $^
+
 testing: $(LIBDIR)/$(LIBRARY)
 	@mkdir -p $(TARGETDIR)
 	@echo " $(CC) $(CFLAGS) $(INC) $(TESTDIR)/TestMatrix.cpp -o bin/TestMatrix"

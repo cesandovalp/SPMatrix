@@ -34,7 +34,6 @@ void TestAddition()
 
   // Trace the instructions
   auto C = A + B;
-  //std::cout << "C memory address: " << &C << std::endl;
 
   PrintMatrix( A );
   std::cout << std::endl;

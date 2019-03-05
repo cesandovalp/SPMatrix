@@ -99,6 +99,7 @@ namespace sp
   template<typename domain>
   void GPUApply( Matrix<domain>* a, domain (*f)( domain ) )
   {
+    //https://stackoverflow.com/questions/41381254/cuda-c11-array-of-lambdas-function-by-index-not-working?noredirect=1&lq=1
     for( unsigned i = 0; i < a->rows; ++i )
       for( unsigned j = 0; j < a->columns; ++j )
         a->data[i * a->columns + j] = f( a->data[i * a->columns + j] );
