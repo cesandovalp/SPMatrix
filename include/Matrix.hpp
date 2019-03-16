@@ -20,11 +20,13 @@ namespace sp
     public:
       unsigned rows, columns;
 
-      domain*          data   = 0           ;
-      domain*          tmp    = 0           ;
+      domain*          data        = 0      ;
+      domain*          tmp         = 0      ;
+      domain*          device_data = 0      ;
       MatrixOperator   negative             ;
       SelfOperation    transpose            ;
       MatrixOperation  copy                 ;
+      SelfOperation    sync                 ;
       MatrixOperation  assign               ;
       MatrixOperation  addition             ;
       MatrixOperation  difference           ;
@@ -44,6 +46,7 @@ namespace sp
 
       Matrix()
       {
+        sync = []( Matrix* a ){ };
         rows    = 0;
         columns = 0;
       }
@@ -56,13 +59,14 @@ namespace sp
 
       Matrix( int rows, int columns ) : rows(rows), columns(columns)
       {
-        data   = new domain[rows * columns];
-        tmp    = new domain[rows * columns];
+        sync = []( Matrix* a ){ };
+        data = new domain[rows * columns];
+        tmp  = new domain[rows * columns];
 
         for( int i = 0; i < rows * columns; ++i )
         {
-          data[i]   = 0;
-          tmp[i]    = 0;
+          data[i] = 0;
+          tmp[i]  = 0;
         }
       }
 
@@ -72,6 +76,7 @@ namespace sp
           negative              = other.negative             ;
           transpose             = other.transpose            ;
           copy                  = other.copy                 ;
+          sync                  = other.sync                 ;
           assign                = other.assign               ;
           assign_vector         = other.assign_vector        ;
           assign_scalar         = other.assign_scalar        ;
@@ -351,6 +356,11 @@ namespace sp
         for( unsigned i = 0; i < rows * columns; ++i )
           result += data[i];
         return result;
+      }
+      
+      void Syncronize()
+      {
+        sync( this );
       }
 
       friend std::ostream& operator<< ( std::ostream& stream, const Matrix<domain>& m )

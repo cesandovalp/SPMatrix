@@ -39,6 +39,8 @@ testing: $(LIBDIR)/$(LIBRARY)
 	@mkdir -p $(TARGETDIR)
 	@echo " $(CC) $(CFLAGS) $(INC) $(TESTDIR)/TestMatrix.cpp -o bin/TestMatrix"
 	$(CC) $(CFLAGS) $(INC) -L$(LIBDIR) -lSPMatrix -L/opt/cuda/lib64 -lcuda -lcudart $(TESTDIR)/TestMatrix.cpp -o bin/TestMatrix
+	@echo " $(CC) $(CFLAGS) $(INC) $(TESTDIR)/BenchmarkMatrix.cpp -o bin/BenchmarkMatrix"
+	$(CC) $(CFLAGS) $(INC) -L$(LIBDIR) -lSPMatrix -L/opt/cuda/lib64 -lcuda -lcudart $(TESTDIR)/BenchmarkMatrix.cpp -o bin/BenchmarkMatrix
 
 $(LIBDIR)/$(LIBRARY): $(BUILDDIR)/cuda_link.o $(OBJECTS) $(NVOBJECTS)
 	@mkdir -p $(LIBDIR)

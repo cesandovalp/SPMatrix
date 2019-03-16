@@ -1,6 +1,19 @@
 #pragma once
 
 #include <cstdio>
+#include <iostream>
+
+#define GPUErrchk( ans ) { GPUAssert( ( ans ), __FILE__, __LINE__ ); }
+
+inline void GPUAssert( cudaError_t code, const char *file, int line, bool abort = true )
+{
+  if( code != cudaSuccess )
+  {
+    fprintf( stderr, "GPUassert: %s %s %d\n", cudaGetErrorString( code ), file, line );
+    if( abort )
+      exit( code );
+  }
+}
 
 template<class domain>
 __global__
@@ -66,49 +79,17 @@ void HadamardKernel( domain* a, const domain* b, domain* result, int rows, int c
 }
 
 template<class domain>
-void GPUAddition( domain* host_a, const domain* host_b, domain* host_result, int rows, int columns )
+void GPUAddition( domain* host_a, const domain* d_b, domain* host_result, int rows, int columns )
 {
   int block_size = 1024;
   int num_blocks = ( ( rows * columns ) / block_size ) + 1;
-
-  float gpu_elapsed_time_ms;
-
-  // some events to count the execution time
-  cudaEvent_t start, stop;
-  cudaEventCreate( &start );
-  cudaEventCreate( &stop );
-
-  // start to count execution time of GPU version
-  cudaEventRecord( start, 0 );
-  // Allocate memory space on the device 
+  
   domain* d_a;
-  domain* d_b;
-  domain* d_c;
 
-  cudaMalloc( (void **) &d_a, sizeof( domain ) * rows * columns );
-  cudaMalloc( (void **) &d_b, sizeof( domain ) * rows * columns );
-  cudaMalloc( (void **) &d_c, sizeof( domain ) * rows * columns);
-
-  // copy matrix A and B from host to device memory
-  cudaMemcpy( d_a, host_a, sizeof( domain ) * rows * columns, cudaMemcpyHostToDevice );
-  cudaMemcpy( d_b, host_b, sizeof( domain ) * rows * columns, cudaMemcpyHostToDevice );
-
-  AdditionKernel<<<num_blocks, block_size>>>( d_a, d_b, d_c, rows, columns );
-  
-  cudaMemcpy( host_result, d_c, sizeof( domain ) * rows * columns, cudaMemcpyDeviceToHost );
-  cudaDeviceSynchronize();
-  // time counting terminate
-  cudaEventRecord( stop, 0 );
-  cudaEventSynchronize( stop );
-
-  // compute time elapse on GPU computing
-  cudaEventElapsedTime( &gpu_elapsed_time_ms, start, stop );
-  //printf( "Time elapsed on matrix addition of %dx%d on GPU: %f ms.\n\n", rows, columns, gpu_elapsed_time_ms );
-  
-  // free memory
-  cudaFree( d_a );
-  cudaFree( d_b );
-  cudaFree( d_c );
+  GPUErrchk( cudaMalloc( (void **) &d_a, sizeof( domain ) * rows * columns ) );
+  GPUErrchk( cudaMemcpy( d_a, host_a, sizeof( domain ) * rows * columns, cudaMemcpyHostToDevice ) );
+  AdditionKernel<<<num_blocks, block_size>>>( d_a, d_b, d_a, rows, columns );
+  GPUErrchk( cudaMemcpy( host_result, d_a, sizeof( domain ) * rows * columns, cudaMemcpyDeviceToHost ) );
 }
 
 template<class domain>
@@ -117,44 +98,28 @@ void GPUDifference( domain* host_a, const domain* host_b, domain* host_result, i
   int block_size = 1024;
   int num_blocks = ( ( rows * columns ) / block_size ) + 1;
 
-  float gpu_elapsed_time_ms;
-
-  // some events to count the execution time
-  cudaEvent_t start, stop;
-  cudaEventCreate( &start );
-  cudaEventCreate( &stop );
-
-  // start to count execution time of GPU version
-  cudaEventRecord( start, 0 );
   // Allocate memory space on the device 
   domain* d_a;
   domain* d_b;
   domain* d_c;
 
-  cudaMalloc( (void **) &d_a, sizeof( domain ) * rows * columns );
-  cudaMalloc( (void **) &d_b, sizeof( domain ) * rows * columns );
-  cudaMalloc( (void **) &d_c, sizeof( domain ) * rows * columns);
+  GPUErrchk( cudaMalloc( (void **) &d_a, sizeof( domain ) * rows * columns ) );
+  GPUErrchk( cudaMalloc( (void **) &d_b, sizeof( domain ) * rows * columns ) );
+  GPUErrchk( cudaMalloc( (void **) &d_c, sizeof( domain ) * rows * columns) );
 
   // copy matrix A and B from host to device memory
-  cudaMemcpy( d_a, host_a, sizeof( domain ) * rows * columns, cudaMemcpyHostToDevice );
-  cudaMemcpy( d_b, host_b, sizeof( domain ) * rows * columns, cudaMemcpyHostToDevice );
+  GPUErrchk( cudaMemcpy( d_a, host_a, sizeof( domain ) * rows * columns, cudaMemcpyHostToDevice ) );
+  GPUErrchk( cudaMemcpy( d_b, host_b, sizeof( domain ) * rows * columns, cudaMemcpyHostToDevice ) );
 
   DifferenceKernel<<<num_blocks, block_size>>>( d_a, d_b, d_c, rows, columns );
   
-  cudaMemcpy( host_result, d_c, sizeof( domain ) * rows * columns, cudaMemcpyDeviceToHost );
+  GPUErrchk( cudaMemcpy( host_result, d_c, sizeof( domain ) * rows * columns, cudaMemcpyDeviceToHost ) );
   cudaDeviceSynchronize();
-  // time counting terminate
-  cudaEventRecord( stop, 0 );
-  cudaEventSynchronize( stop );
 
-  // compute time elapse on GPU computing
-  cudaEventElapsedTime( &gpu_elapsed_time_ms, start, stop );
-  //printf( "Time elapsed on matrix addition of %dx%d on GPU: %f ms.\n\n", rows, columns, gpu_elapsed_time_ms );
-  
   // free memory
-  cudaFree( d_a );
-  cudaFree( d_b );
-  cudaFree( d_c );
+  GPUErrchk( cudaFree( d_a ) );
+  GPUErrchk( cudaFree( d_b ) );
+  GPUErrchk( cudaFree( d_c ) );
 }
 
 template<class domain>
@@ -163,44 +128,28 @@ void GPUMultiplication( domain* host_a, const domain* host_b, domain* host_resul
   dim3 block_dim( 32, 32 );
   dim3 grid_dim( (a_rows / 32) + 1, (b_columns / 32) + 1 );
 
-  float gpu_elapsed_time_ms;
-
-  // some events to count the execution time
-  cudaEvent_t start, stop;
-  cudaEventCreate( &start );
-  cudaEventCreate( &stop );
-
-  // start to count execution time of GPU version
-  cudaEventRecord( start, 0 );
   // Allocate memory space on the device 
   domain* d_a;
   domain* d_b;
   domain* d_c;
 
-  cudaMalloc( (void **) &d_a, sizeof( domain ) * a_rows * a_columns );
-  cudaMalloc( (void **) &d_b, sizeof( domain ) * a_columns * b_columns );
-  cudaMalloc( (void **) &d_c, sizeof( domain ) * a_rows * b_columns );
+  GPUErrchk( cudaMalloc( (void **) &d_a, sizeof( domain ) * a_rows * a_columns ) );
+  GPUErrchk( cudaMalloc( (void **) &d_b, sizeof( domain ) * a_columns * b_columns ) );
+  GPUErrchk( cudaMalloc( (void **) &d_c, sizeof( domain ) * a_rows * b_columns ) );
 
   // copy matrix A and B from host to device memory
-  cudaMemcpy( d_a, host_a, sizeof( domain ) * a_rows * a_columns, cudaMemcpyHostToDevice );
-  cudaMemcpy( d_b, host_b, sizeof( domain ) * a_columns * b_columns, cudaMemcpyHostToDevice );
+  GPUErrchk( cudaMemcpy( d_a, host_a, sizeof( domain ) * a_rows * a_columns, cudaMemcpyHostToDevice ) );
+  GPUErrchk( cudaMemcpy( d_b, host_b, sizeof( domain ) * a_columns * b_columns, cudaMemcpyHostToDevice ) );
 
   MultiplicationKernel<<<grid_dim, block_dim>>>( d_a, d_b, d_c, a_rows, a_columns, b_columns );
 
-  cudaMemcpy( host_result, d_c, sizeof( domain ) * a_rows * b_columns, cudaMemcpyDeviceToHost );
+  GPUErrchk( cudaMemcpy( host_result, d_c, sizeof( domain ) * a_rows * b_columns, cudaMemcpyDeviceToHost ) );
   cudaDeviceSynchronize();
-  // time counting terminate
-  cudaEventRecord( stop, 0 );
-  cudaEventSynchronize( stop );
 
-  // compute time elapse on GPU computing
-  cudaEventElapsedTime( &gpu_elapsed_time_ms, start, stop );
-  //printf( "Time elapsed on matrix addition of %dx%d on GPU: %f ms.\n\n", rows, columns, gpu_elapsed_time_ms );
-  
   // free memory
-  cudaFree( d_a );
-  cudaFree( d_b );
-  cudaFree( d_c );
+  GPUErrchk( cudaFree( d_a ) );
+  GPUErrchk( cudaFree( d_b ) );
+  GPUErrchk( cudaFree( d_c ) );
 }
 
 template<class domain>
@@ -209,40 +158,24 @@ void GPUMultiplication( domain* host_a, const domain host_b, domain* host_result
   dim3 block_dim( 32, 32 );
   dim3 grid_dim( (rows / 32) + 1, (columns / 32) + 1 );
 
-  float gpu_elapsed_time_ms;
-
-  // some events to count the execution time
-  cudaEvent_t start, stop;
-  cudaEventCreate( &start );
-  cudaEventCreate( &stop );
-
-  // start to count execution time of GPU version
-  cudaEventRecord( start, 0 );
   // Allocate memory space on the device 
   domain* d_a;
   domain* d_c;
 
-  cudaMalloc( (void **) &d_a, sizeof( domain ) * rows * columns );
-  cudaMalloc( (void **) &d_c, sizeof( domain ) * rows * columns );
+  GPUErrchk( cudaMalloc( (void **) &d_a, sizeof( domain ) * rows * columns ) );
+  GPUErrchk( cudaMalloc( (void **) &d_c, sizeof( domain ) * rows * columns ) );
 
   // copy matrix A and B from host to device memory
-  cudaMemcpy( d_a, host_a, sizeof( domain ) * rows * columns, cudaMemcpyHostToDevice );
+  GPUErrchk( cudaMemcpy( d_a, host_a, sizeof( domain ) * rows * columns, cudaMemcpyHostToDevice ) );
 
   MultiplicationKernel<<<grid_dim, block_dim>>>( d_a, host_b, d_c, rows, columns );
 
-  cudaMemcpy( host_result, d_c, sizeof( domain ) * rows * columns, cudaMemcpyDeviceToHost );
+  GPUErrchk( cudaMemcpy( host_result, d_c, sizeof( domain ) * rows * columns, cudaMemcpyDeviceToHost ) );
   cudaDeviceSynchronize();
-  // time counting terminate
-  cudaEventRecord( stop, 0 );
-  cudaEventSynchronize( stop );
-
-  // compute time elapse on GPU computing
-  cudaEventElapsedTime( &gpu_elapsed_time_ms, start, stop );
-  //printf( "Time elapsed on matrix addition of %dx%d on GPU: %f ms.\n\n", rows, columns, gpu_elapsed_time_ms );
   
   // free memory
-  cudaFree( d_a );
-  cudaFree( d_c );
+  GPUErrchk( cudaFree( d_a ) );
+  GPUErrchk( cudaFree( d_c ) );
 }
 
 template<class domain>
@@ -251,42 +184,48 @@ void GPUHadamard( domain* host_a, const domain* host_b, domain* host_result, int
   int block_size = 1024;
   int num_blocks = ( ( rows * columns ) / block_size ) + 1;
 
-  float gpu_elapsed_time_ms;
-
-  // some events to count the execution time
-  cudaEvent_t start, stop;
-  cudaEventCreate( &start );
-  cudaEventCreate( &stop );
-
-  // start to count execution time of GPU version
-  cudaEventRecord( start, 0 );
   // Allocate memory space on the device 
   domain* d_a;
   domain* d_b;
   domain* d_c;
 
-  cudaMalloc( (void **) &d_a, sizeof( domain ) * rows * columns );
-  cudaMalloc( (void **) &d_b, sizeof( domain ) * rows * columns );
-  cudaMalloc( (void **) &d_c, sizeof( domain ) * rows * columns);
+  GPUErrchk( cudaMalloc( (void **) &d_a, sizeof( domain ) * rows * columns ) );
+  GPUErrchk( cudaMalloc( (void **) &d_b, sizeof( domain ) * rows * columns ) );
+  GPUErrchk( cudaMalloc( (void **) &d_c, sizeof( domain ) * rows * columns) );
 
   // copy matrix A and B from host to device memory
-  cudaMemcpy( d_a, host_a, sizeof( domain ) * rows * columns, cudaMemcpyHostToDevice );
-  cudaMemcpy( d_b, host_b, sizeof( domain ) * rows * columns, cudaMemcpyHostToDevice );
+  GPUErrchk( cudaMemcpy( d_a, host_a, sizeof( domain ) * rows * columns, cudaMemcpyHostToDevice ) );
+  GPUErrchk( cudaMemcpy( d_b, host_b, sizeof( domain ) * rows * columns, cudaMemcpyHostToDevice ) );
 
   HadamardKernel<<<num_blocks, block_size>>>( d_a, d_b, d_c, rows, columns );
   
-  cudaMemcpy( host_result, d_c, sizeof( domain ) * rows * columns, cudaMemcpyDeviceToHost );
+  GPUErrchk( cudaMemcpy( host_result, d_c, sizeof( domain ) * rows * columns, cudaMemcpyDeviceToHost ) );
   cudaDeviceSynchronize();
-  // time counting terminate
-  cudaEventRecord( stop, 0 );
-  cudaEventSynchronize( stop );
 
-  // compute time elapse on GPU computing
-  cudaEventElapsedTime( &gpu_elapsed_time_ms, start, stop );
-  //printf( "Time elapsed on matrix addition of %dx%d on GPU: %f ms.\n\n", rows, columns, gpu_elapsed_time_ms );
-  
   // free memory
-  cudaFree( d_a );
-  cudaFree( d_b );
-  cudaFree( d_c );
+  GPUErrchk( cudaFree( d_a ) );
+  GPUErrchk( cudaFree( d_b ) );
+  GPUErrchk( cudaFree( d_c ) );
+}
+
+template<class domain>
+void GPUAssign( const domain* host_a, domain** d_a, int rows, int columns )
+{
+  // Allocate memory space on the device 
+  GPUErrchk( cudaMalloc( (void **) d_a, sizeof( domain ) * rows * columns ) );
+  // copy matrix A from host to device memory
+  GPUErrchk( cudaMemcpy( *d_a, host_a, sizeof( domain ) * rows * columns, cudaMemcpyHostToDevice ) );
+}
+
+template<class domain>
+void GPUCopy( const domain* host_a, domain* d_a, int rows, int columns )
+{
+  // copy matrix A from host to device memory
+  GPUErrchk( cudaMemcpy( d_a, host_a, sizeof( domain ) * rows * columns, cudaMemcpyHostToDevice ) );
+}
+
+template<class domain>
+void GPUFree( domain* device_data )
+{
+  GPUErrchk( cudaFree( device_data ) );
 }
