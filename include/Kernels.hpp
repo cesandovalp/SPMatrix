@@ -93,62 +93,49 @@ void GPUAddition( domain* host_a, const domain* d_b, domain* host_result, int ro
 }
 
 template<class domain>
-void GPUDifference( domain* host_a, const domain* host_b, domain* host_result, int rows, int columns )
+void GPUDifference( domain* host_a, const domain* d_b, domain* host_result, int rows, int columns )
 {
   int block_size = 1024;
   int num_blocks = ( ( rows * columns ) / block_size ) + 1;
 
   // Allocate memory space on the device 
   domain* d_a;
-  domain* d_b;
-  domain* d_c;
 
   GPUErrchk( cudaMalloc( (void **) &d_a, sizeof( domain ) * rows * columns ) );
-  GPUErrchk( cudaMalloc( (void **) &d_b, sizeof( domain ) * rows * columns ) );
-  GPUErrchk( cudaMalloc( (void **) &d_c, sizeof( domain ) * rows * columns) );
 
-  // copy matrix A and B from host to device memory
+  // copy matrix A from host to device memory
   GPUErrchk( cudaMemcpy( d_a, host_a, sizeof( domain ) * rows * columns, cudaMemcpyHostToDevice ) );
-  GPUErrchk( cudaMemcpy( d_b, host_b, sizeof( domain ) * rows * columns, cudaMemcpyHostToDevice ) );
 
-  DifferenceKernel<<<num_blocks, block_size>>>( d_a, d_b, d_c, rows, columns );
+  DifferenceKernel<<<num_blocks, block_size>>>( d_a, d_b, d_a, rows, columns );
   
-  GPUErrchk( cudaMemcpy( host_result, d_c, sizeof( domain ) * rows * columns, cudaMemcpyDeviceToHost ) );
-  cudaDeviceSynchronize();
+  GPUErrchk( cudaMemcpy( host_result, d_a, sizeof( domain ) * rows * columns, cudaMemcpyDeviceToHost ) );
 
   // free memory
   GPUErrchk( cudaFree( d_a ) );
-  GPUErrchk( cudaFree( d_b ) );
-  GPUErrchk( cudaFree( d_c ) );
 }
 
 template<class domain>
-void GPUMultiplication( domain* host_a, const domain* host_b, domain* host_result, int a_rows, int a_columns, int b_columns )
+void GPUMultiplication( domain* host_a, const domain* d_b, domain* host_result, int a_rows, int a_columns, int b_columns )
 {
   dim3 block_dim( 32, 32 );
   dim3 grid_dim( (a_rows / 32) + 1, (b_columns / 32) + 1 );
 
   // Allocate memory space on the device 
   domain* d_a;
-  domain* d_b;
   domain* d_c;
 
   GPUErrchk( cudaMalloc( (void **) &d_a, sizeof( domain ) * a_rows * a_columns ) );
-  GPUErrchk( cudaMalloc( (void **) &d_b, sizeof( domain ) * a_columns * b_columns ) );
   GPUErrchk( cudaMalloc( (void **) &d_c, sizeof( domain ) * a_rows * b_columns ) );
 
   // copy matrix A and B from host to device memory
   GPUErrchk( cudaMemcpy( d_a, host_a, sizeof( domain ) * a_rows * a_columns, cudaMemcpyHostToDevice ) );
-  GPUErrchk( cudaMemcpy( d_b, host_b, sizeof( domain ) * a_columns * b_columns, cudaMemcpyHostToDevice ) );
 
   MultiplicationKernel<<<grid_dim, block_dim>>>( d_a, d_b, d_c, a_rows, a_columns, b_columns );
 
   GPUErrchk( cudaMemcpy( host_result, d_c, sizeof( domain ) * a_rows * b_columns, cudaMemcpyDeviceToHost ) );
-  cudaDeviceSynchronize();
 
   // free memory
   GPUErrchk( cudaFree( d_a ) );
-  GPUErrchk( cudaFree( d_b ) );
   GPUErrchk( cudaFree( d_c ) );
 }
 
@@ -179,33 +166,26 @@ void GPUMultiplication( domain* host_a, const domain host_b, domain* host_result
 }
 
 template<class domain>
-void GPUHadamard( domain* host_a, const domain* host_b, domain* host_result, int rows, int columns )
+void GPUHadamard( domain* host_a, const domain* d_b, domain* host_result, int rows, int columns )
 {
   int block_size = 1024;
   int num_blocks = ( ( rows * columns ) / block_size ) + 1;
 
   // Allocate memory space on the device 
   domain* d_a;
-  domain* d_b;
-  domain* d_c;
 
   GPUErrchk( cudaMalloc( (void **) &d_a, sizeof( domain ) * rows * columns ) );
-  GPUErrchk( cudaMalloc( (void **) &d_b, sizeof( domain ) * rows * columns ) );
-  GPUErrchk( cudaMalloc( (void **) &d_c, sizeof( domain ) * rows * columns) );
 
   // copy matrix A and B from host to device memory
   GPUErrchk( cudaMemcpy( d_a, host_a, sizeof( domain ) * rows * columns, cudaMemcpyHostToDevice ) );
-  GPUErrchk( cudaMemcpy( d_b, host_b, sizeof( domain ) * rows * columns, cudaMemcpyHostToDevice ) );
 
-  HadamardKernel<<<num_blocks, block_size>>>( d_a, d_b, d_c, rows, columns );
+  HadamardKernel<<<num_blocks, block_size>>>( d_a, d_b, d_a, rows, columns );
   
-  GPUErrchk( cudaMemcpy( host_result, d_c, sizeof( domain ) * rows * columns, cudaMemcpyDeviceToHost ) );
+  GPUErrchk( cudaMemcpy( host_result, d_a, sizeof( domain ) * rows * columns, cudaMemcpyDeviceToHost ) );
   cudaDeviceSynchronize();
 
   // free memory
   GPUErrchk( cudaFree( d_a ) );
-  GPUErrchk( cudaFree( d_b ) );
-  GPUErrchk( cudaFree( d_c ) );
 }
 
 template<class domain>

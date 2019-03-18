@@ -6,21 +6,21 @@ void GPUAddition_( double* host_a, const double* device_b, double* host_result, 
 void GPUAddition_( float*  host_a, const float*  device_b, float*  host_result, int rows, int columns );
 void GPUAddition_( int*    host_a, const int*    device_b, int*    host_result, int rows, int columns );
 
-void GPUDifference_( double* host_a, const double* host_b, double* host_result, int rows, int columns );
-void GPUDifference_( float*  host_a, const float*  host_b, float*  host_result, int rows, int columns );
-void GPUDifference_( int*    host_a, const int*    host_b, int*    host_result, int rows, int columns );
+void GPUDifference_( double* host_a, const double* device_b, double* host_result, int rows, int columns );
+void GPUDifference_( float*  host_a, const float*  device_b, float*  host_result, int rows, int columns );
+void GPUDifference_( int*    host_a, const int*    device_b, int*    host_result, int rows, int columns );
 
-void GPUMultiplication_( double* host_a, const double* host_b, double* host_result, int a_rows, int a_columns, int b_columns );
-void GPUMultiplication_( float*  host_a, const float*  host_b, float*  host_result, int a_rows, int a_columns, int b_columns );
-void GPUMultiplication_( int*    host_a, const int*    host_b, int*    host_result, int a_rows, int a_columns, int b_columns );
+void GPUMultiplication_( double* host_a, const double* device_b, double* host_result, int a_rows, int a_columns, int b_columns );
+void GPUMultiplication_( float*  host_a, const float*  device_b, float*  host_result, int a_rows, int a_columns, int b_columns );
+void GPUMultiplication_( int*    host_a, const int*    device_b, int*    host_result, int a_rows, int a_columns, int b_columns );
 
-void GPUMultiplication_( double* host_a, const double host_b, double* host_result, int a_rows, int a_columns );
-void GPUMultiplication_( float*  host_a, const float  host_b, float*  host_result, int a_rows, int a_columns );
-void GPUMultiplication_( int*    host_a, const int    host_b, int*    host_result, int a_rows, int a_columns );
+void GPUMultiplication_( double* host_a, const double b, double* host_result, int a_rows, int a_columns );
+void GPUMultiplication_( float*  host_a, const float  b, float*  host_result, int a_rows, int a_columns );
+void GPUMultiplication_( int*    host_a, const int    b, int*    host_result, int a_rows, int a_columns );
 
-void GPUHadamard_( double* host_a, const double* host_b, double* host_result, int rows, int columns );
-void GPUHadamard_( float*  host_a, const float*  host_b, float*  host_result, int rows, int columns );
-void GPUHadamard_( int*    host_a, const int*    host_b, int*    host_result, int rows, int columns );
+void GPUHadamard_( double* host_a, const double* device_b, double* host_result, int rows, int columns );
+void GPUHadamard_( float*  host_a, const float*  device_b, float*  host_result, int rows, int columns );
+void GPUHadamard_( int*    host_a, const int*    device_b, int*    host_result, int rows, int columns );
 
 void GPUAssign_( const double* host_a, double** device_a, int rows, int columns );
 void GPUAssign_( const float*  host_a, float**  device_a, int rows, int columns );
@@ -39,7 +39,7 @@ namespace sp
   template<typename domain>
   void GPUAddition( Matrix<domain>* a, const Matrix<domain>& b )
   {
-    //GPUAddition_( a->data, b.device_data, a->data, a->rows, a->columns );
+    GPUAddition_( a->data, b.device_data, a->data, a->rows, a->columns );
   }
 
   template<typename domain>
@@ -47,26 +47,28 @@ namespace sp
   {
     domain* device_data;
     GPUAssign_( b.data(), &device_data, a->rows, a->columns );
-    GPUAddition_( a->device_data, device_data, a->data, a->rows, a->columns );
+    GPUAddition_( a->data, device_data, a->data, a->rows, a->columns );
   }
 
   template<typename domain>
   void GPUDifference( Matrix<domain>* a, const Matrix<domain>& b )
   {
-    GPUDifference_( a->data, b.data, a->data, a->rows, a->columns );
+    GPUDifference_( a->data, b.device_data, a->data, a->rows, a->columns );
   }
 
   template<typename domain>
   void GPUDifference( Matrix<domain>* a, const std::vector<domain>& b )
   {
-    GPUDifference_( a->data, b.data(), a->data, a->rows, a->columns );
+    domain* device_data;
+    GPUAssign_( b.data(), &device_data, a->rows, a->columns );
+    GPUDifference_( a->data, device_data, a->data, a->rows, a->columns );
   }
 
   template<typename domain>
   void GPUMultiplication( Matrix<domain>* a, const Matrix<domain>& b )
   {
     Matrix<domain> result( a->rows, b.columns );
-    GPUMultiplication_( a->data, b.data, result.data, a->rows, a->columns, b.columns );
+    GPUMultiplication_( a->data, b.device_data, result.data, a->rows, a->columns, b.columns );
     a->Copy( result );
   }
 
@@ -74,7 +76,9 @@ namespace sp
   void GPUMultiplication( Matrix<domain>* a, const std::vector<domain>& b )
   {
     Matrix<domain> result( a->rows, 1 );
-    GPUMultiplication_( a->data, b.data(), result.data, a->rows, a->columns, 1 );
+    domain* device_data;
+    GPUAssign_( b.data(), &device_data, a->rows, a->columns );
+    GPUMultiplication_( a->data, device_data, result.data, a->rows, a->columns, 1 );
     a->Copy( result );
   }
 
@@ -87,27 +91,19 @@ namespace sp
   template<typename domain>
   void GPUMultiplicationAux( Matrix<domain>* a, const Matrix<domain>& b )
   {
-    domain* swap;
-
-    GPUMultiplication_( a->data, b.data, a->tmp, a->rows, a->columns, b.columns );
-
-    swap    = a->data;
-    a->data = a->tmp;
-    a->tmp  = swap;
-    for( unsigned i = 0; i < a->rows * a->columns; ++i )
-      a->tmp[i] = 0;
+    GPUMultiplication_( a->data, b.device_data, a->data, a->rows, a->columns, b.columns );
   }
 
   template<typename domain>
   void GPUHadamard( Matrix<domain>* a, const Matrix<domain>& b )
   {
-    GPUHadamard_( a->data, b.data, a->data, a->rows, a->columns );
+    GPUHadamard_( a->data, b.device_data, a->data, a->rows, a->columns );
   }
 
   template<typename domain>
   void GPUMultiplicationIn( Matrix<domain>* a, const Matrix<domain>& b, const Matrix<domain>& c )
   {
-    GPUMultiplication_( b.data, c.data, a->data, b.rows, b.columns, c.columns );
+    GPUMultiplication_( b.data, c.device_data, a->data, b.rows, b.columns, c.columns );
   }
 
   template<typename domain>

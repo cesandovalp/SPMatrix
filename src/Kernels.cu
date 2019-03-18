@@ -19,70 +19,70 @@ void GPUAddition_( int* host_a, const int* d_b, int* host_result, int rows, int 
 
 ////////////////////////////////////////////// DIFFERENCE //////////////////////////////////////////////
 
-void GPUDifference_( double* host_a, const double* host_b, double* host_result, int rows, int columns )
+void GPUDifference_( double* host_a, const double* d_b, double* host_result, int rows, int columns )
 {
-  GPUDifference<double>( host_a, host_b, host_result, rows, columns );
+  GPUDifference<double>( host_a, d_b, host_result, rows, columns );
 }
 
-void GPUDifference_( float* host_a, const float* host_b, float* host_result, int rows, int columns )
+void GPUDifference_( float* host_a, const float* d_b, float* host_result, int rows, int columns )
 {
-  GPUDifference<float>( host_a, host_b, host_result, rows, columns );
+  GPUDifference<float>( host_a, d_b, host_result, rows, columns );
 }
 
-void GPUDifference_( int* host_a, const int* host_b, int* host_result, int rows, int columns )
+void GPUDifference_( int* host_a, const int* d_b, int* host_result, int rows, int columns )
 {
-  GPUDifference<int>( host_a, host_b, host_result, rows, columns );
+  GPUDifference<int>( host_a, d_b, host_result, rows, columns );
 }
 
 ////////////////////////////////////////////// MULTIPLICATION //////////////////////////////////////////////
 
-void GPUMultiplication_( double* host_a, const double* host_b, double* host_result, int a_rows, int a_columns, int b_columns )
+void GPUMultiplication_( double* host_a, const double* d_b, double* host_result, int a_rows, int a_columns, int b_columns )
 {
-  GPUMultiplication<double>( host_a, host_b, host_result, a_rows, a_columns, b_columns );
+  GPUMultiplication<double>( host_a, d_b, host_result, a_rows, a_columns, b_columns );
 }
 
-void GPUMultiplication_( float* host_a, const float* host_b, float* host_result, int a_rows, int a_columns, int b_columns )
+void GPUMultiplication_( float* host_a, const float* d_b, float* host_result, int a_rows, int a_columns, int b_columns )
 {
-  GPUMultiplication<float>( host_a, host_b, host_result, a_rows, a_columns, b_columns );
+  GPUMultiplication<float>( host_a, d_b, host_result, a_rows, a_columns, b_columns );
 }
 
-void GPUMultiplication_( int* host_a, const int* host_b, int* host_result, int a_rows, int a_columns, int b_columns )
+void GPUMultiplication_( int* host_a, const int* d_b, int* host_result, int a_rows, int a_columns, int b_columns )
 {
-  GPUMultiplication<int>( host_a, host_b, host_result, a_rows, a_columns, b_columns );
+  GPUMultiplication<int>( host_a, d_b, host_result, a_rows, a_columns, b_columns );
 }
 
 ////////////////////////////////////////// MULTIPLICATION SQUARE //////////////////////////////////////////
 
-void GPUMultiplication_( double* host_a, const double host_b, double* host_result, int rows, int columns )
+void GPUMultiplication_( double* host_a, const double b, double* host_result, int rows, int columns )
 {
-  GPUMultiplication<double>( host_a, host_b, host_result, rows, columns );
+  GPUMultiplication<double>( host_a, b, host_result, rows, columns );
 }
 
-void GPUMultiplication_( float* host_a, const float host_b, float* host_result, int rows, int columns )
+void GPUMultiplication_( float* host_a, const float b, float* host_result, int rows, int columns )
 {
-  GPUMultiplication<float>( host_a, host_b, host_result, rows, columns );
+  GPUMultiplication<float>( host_a, b, host_result, rows, columns );
 }
 
-void GPUMultiplication_( int* host_a, const int host_b, int* host_result, int rows, int columns )
+void GPUMultiplication_( int* host_a, const int b, int* host_result, int rows, int columns )
 {
-  GPUMultiplication<int>( host_a, host_b, host_result, rows, columns );
+  GPUMultiplication<int>( host_a, b, host_result, rows, columns );
 }
 
 ////////////////////////////////////////////// HADAMARD //////////////////////////////////////////////
 
-void GPUHadamard_( double* host_a, const double* host_b, double* host_result, int rows, int columns )
+void GPUHadamard_( double* host_a, const double* d_b, double* host_result, int rows, int columns )
 {
-  GPUHadamard<double>( host_a, host_b, host_result, rows, columns );
+  GPUHadamard<double>( host_a, d_b, host_result, rows, columns );
 }
 
-void GPUHadamard_( float* host_a, const float* host_b, float* host_result, int rows, int columns )
+void GPUHadamard_( float* host_a, const float* d_b, float* host_result, int rows, int columns )
 {
-  GPUHadamard<float>( host_a, host_b, host_result, rows, columns );
+  GPUHadamard<float>( host_a, d_b, host_result, rows, columns );
 }
 
-void GPUHadamard_( int* host_a, const int* host_b, int* host_result, int rows, int columns )
+void GPUHadamard_( int* host_a, const int* d_b, int* host_result, int rows, int columns )
 {
-  GPUHadamard<int>( host_a, host_b, host_result, rows, columns );
+  GPUHadamard<int>( host_a, d_b, host_result, rows, columns );
 }
 
 /////////////////////////////////////////////// ASSIGN //////////////////////////////////////////////

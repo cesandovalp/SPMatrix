@@ -27,30 +27,41 @@ void TestAddition()
   FillMatrix( A );
   FillMatrix( B );
 
-  // Trace the instructions
   for( int i = 0; i < 100; ++i )
     auto C = A + B;
 }
 
+void TestGPU()
+{
+  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 1, 1 );
+
+  FillMatrix( A );
+}
+
 void TestMultiplicationVector()
 {
-  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 2, 3 );
-  std::vector<int> B( { 1, 2, 3 } );
+  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 200, 400 );
+  std::vector<int> B( 400 );
+  
+  for( int i = 0; i < 400; ++i )
+    B[i] = i;
 
   FillMatrix( A );
 
-  auto C = A * B;
+  for( int i = 0; i < 100; ++i )
+    auto C = A * B;
 }
 
 void TestMultiplication()
 {
-  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 200, 300 );
-  auto B = sp::MatrixFactory::instance()->CreateMatrix<int>( 300, 400 );
+  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 300, 300 );
+  auto B = sp::MatrixFactory::instance()->CreateMatrix<int>( 300, 300 );
 
   FillMatrix( A );
   FillMatrix( B );
 
-  auto C = A * B;
+  for( int i = 0; i < 100; ++i )
+    auto C = A * B;
 }
 
 void TestMultiplicationNoResize()
@@ -61,18 +72,26 @@ void TestMultiplicationNoResize()
   FillMatrix( A );
   FillMatrix( B );
 
-  A.Multiplication( B );
+  for( int i = 0; i < 100; ++i )
+  {
+    FillMatrix( A );
+    A.Multiplication( B );
+  }
 }
 
 void TestHadamardProduct()
 {
-  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 300, 300 );
-  auto B = sp::MatrixFactory::instance()->CreateMatrix<int>( 300, 300 );
+  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 300, 500 );
+  auto B = sp::MatrixFactory::instance()->CreateMatrix<int>( 300, 500 );
 
   FillMatrix( A );
   FillMatrix( B );
 
-  A.HadamardProduct( B );
+  for( int i = 0; i < 100; ++i )
+  {
+    FillMatrix( A );
+    A.HadamardProduct( B );
+  }
 }
 
 void TestMultiplicationIn()
@@ -84,17 +103,20 @@ void TestMultiplicationIn()
   FillMatrix( A );
   FillMatrix( B );
 
-  C.Multiplication( A, B );
+  for( int i = 0; i < 100; ++i )
+    C.Multiplication( A, B );
 }
 
 void TestMultiplicationScalar()
 {
-  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 200, 300 );
+  auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 400, 400 );
 
   FillMatrix( A );
 
   auto B = A;
-  auto C = B * 2;
+
+  for( int i = 0; i < 100; ++i )
+    auto C = B * 2;
 }
 
 void TestTranspose()
@@ -102,7 +124,8 @@ void TestTranspose()
   auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 200, 300 );
   FillMatrix( A );
 
-  auto B = !A;
+  for( int i = 0; i < 100; ++i )
+    auto B = !A;
 }
 
 void TestMinus()
@@ -110,7 +133,8 @@ void TestMinus()
   auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 300, 300 );
   FillMatrix( A );
 
-  auto B = -A;
+  for( int i = 0; i < 100; ++i )
+    auto B = -A;
 }
 
 void TestCopy()
@@ -118,7 +142,8 @@ void TestCopy()
   auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 300, 300 );
   FillMatrix( A );
 
-  Matrix<int> B = A;
+  for( int i = 0; i < 100; ++i )
+    Matrix<int> B = A;
 }
 
 void TestApply()
@@ -130,14 +155,16 @@ void TestApply()
 
   B = A.Apply( []( int x ) { return 2 * x; } );
   B = A.Apply( []( int x ) { return x < 5 ? 0 : x; } );
-  auto C = !B;
+  for( int i = 0; i < 100; ++i )
+    auto C = !B;
 }
 
 void TestToTarget()
 {
   auto A = sp::MatrixFactory::instance()->CreateMatrix<int>( 300, 300 );
   FillMatrix( A );
-  auto B = A.ToVector();
+  for( int i = 0; i < 100; ++i )
+    auto B = A.ToVector();
 }
 
 template<typename TestFunction>
@@ -155,7 +182,6 @@ void TestOne( TestFunction test_function, std::string test_name )
 
 void TestAll( std::string mode )
 {
-  TestOne( TestAddition               , "Addition "              + mode );
   TestOne( TestAddition               , "Addition "              + mode );
   TestOne( TestMultiplication         , "Multiplication "        + mode );
   TestOne( TestMultiplicationNoResize , "Multiplication Same "   + mode );
@@ -177,6 +203,7 @@ int main()
   sp::MatrixFactory::instance()->SetMode( sp::multicore );
   TestAll( "multicore" );
   sp::MatrixFactory::instance()->SetMode( sp::gpu );
+  TestGPU();
   TestAll( "gpu" );
 
   return 0;
